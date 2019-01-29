@@ -1,0 +1,43 @@
+import requests #將requests，網頁原始碼索取套件叫進來
+from bs4 import BeautifulSoup #從bs4將beautifulsoup叫進來，網頁擷取套件
+import xlwt #要先安裝xlwt，excel使用的套件
+import os #叫進作業系統
+
+os.chdir('/Users/shanyu/Desktop/') #切換工作資料夾，請自行更改路徑
+
+url = 'https://udndata.com/ndapp/Searchdec?udndbid=udndata&page=1&SearchString=%BA%F1%A6%E2%AA%BF%AE%71%2B%A4%E9%B4%C1%3E%3D19510101%2B%A4%E9%B4%C1%3C%3D20171231%2B%B3%F8%A7%4F%3D%C1%70%A6%58%B3%F8&sharepage=50&select=0&kind=2&showSearchString='
+#給予目標網址，請自行更改
+#上方的page=1可以手動修改，不用慢慢點
+#注意自己是否按了由遠到近/由近到遠；每頁20/50筆新聞的設定，如果有，網址會變
+
+file = xlwt.Workbook() #Work的W是大寫
+table = file.add_sheet('data', cell_overwrite_ok = True ) #建立新的excel分頁，可自行命名，而對同個儲存格可複寫
+
+v = 0 # v,w,x,y等變數是等一下列印到csv時會用到，不然全部會覆寫在同一欄
+w = 0
+x = 0
+y = 0
+
+for round in range(1): #要做幾次迴圈，比如每頁50頁新聞，10次則總共做500，切記一次總數不可超過1000
+    res = requests.get(url) #命名變數res，內容為對目標連結使用requests後的結果
+    soup = BeautifulSoup(res.text, 'html.parser') #命名變數soup，內容為對res擷取出來的資料使用beautifulsoup
+    title = soup.select('h2.control-pic a') #命名變數articles，內容為抓取div.news（大架構）底下的h2.control-pic(標題）、span.source（來源）、p.summary（摘要）（子架構）
+    source = soup.select('div.news span.source')
+    summary = soup.select('div.news p.summary')
+    
+    for t in title: #將title存在t 
+        table.write(v, 0, t.text) #對某個儲存格寫入資料（列row，欄column，內容t的文字形式）
+        table.write(w, 1, 'https://udndata.com' + t['href'])#抓取t的href資料（超連結）
+        v = v + 1 #下一筆資料會存到下一格
+        w = w + 1
+    
+    for s1 in source:
+        table.write(x, 2, s1.text)
+        x = x + 1
+    for s2 in summary:
+        table.write(y, 3, s2.text)
+        y = y + 1
+
+    url = 'https://udndata.com' + soup.select('div.page-number.page-number-mob a')[5]['href']
+#會自動跑下一頁連結；mob指的是手機版瀏覽介面；pad指的是平板的；com是電腦的
+file.save('udndata.csv')#將檔案儲存成csv檔，也可以存xls但是不能超過65536列或256欄。此函數不可存xlsx。
