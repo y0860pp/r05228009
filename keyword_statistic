@@ -1,0 +1,22 @@
+import numpy as np #叫進numpy功能
+import pandas as pd #叫進pandas功能
+import os #叫進作業系統
+
+os.chdir('/Users/shanyu/Desktop/') #切換工作資料夾，請自行更改路徑
+
+df = pd.read_excel('123.xlsx', sheet_name='資料剖析', header=None) 
+#利用pd內的功能讀取excel，（檔名,工作表名,標題是否需要）
+
+ls = []
+for i in range(np.size(df,1)):#此處是以行為單位來做迴圈，因此要看有幾「列」
+    ls.append(df.iloc[:,i].tolist())
+flat_list = [item for sublist in ls for item in sublist]
+
+cla = np.unique(flat_list)#利用numpy中的unique將每一個類別都列出來
+
+cc = []
+for i in range(len(cla)):
+    cc.append(flat_list.count(cla[i]))#利用count將每個類別的數量算出來
+    
+ans = pd.DataFrame(np.column_stack([cla, cc]), columns=['class', 'count'])#將類別與數量輸出
+ans.to_excel('finalResults.xlsx') #結果儲存為xlsx
